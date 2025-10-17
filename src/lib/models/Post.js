@@ -38,10 +38,46 @@ const PostSchema = new mongoose.Schema({
         type: String,
         default: 'https://via.placeholder.com/800x400'
     },
-    status:{
+    status: {
         type: String,
         enum: ['draft', 'published', 'archived'],
         default: 'published'
+    },
+    views: {
+        type: Number,
+        default: 0
+    },
+    likes: {
+        type: Number,
+        default: 0
+    },
+    publishedAt: {
+        type: Date,
+        default: Date.now
     }
 
+}, {
+    timestamps: true
 })
+
+PostSchema.pre('save', function (next) {
+    if (this.isModified('title')) {
+        this.slug = this.title
+            .toLowerCase()
+            .replace(/[^\\w\\s-]/g, '')
+            .replace(/\\s+/g, '-')
+            .replace(/--+/g, '-')
+            .trim();
+    }
+    next();
+})
+
+//Index for better search performance
+
+PostSchema.index({
+    title: 'text',
+    content: 'text',
+    tags: 'text'
+});
+
+export default mongoose.models.Post || mongoose.model('Post', PostSchema)
